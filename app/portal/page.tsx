@@ -127,7 +127,10 @@ export default function PortalPage() {
   }
 
   async function toggleCamera(id: string, field: 'recording' | 'online' = 'recording') {
-    await fetch(`/api/cameras/${id}/toggle`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ field }) });
+    const res = await fetch(`/api/cameras/${id}/toggle`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ field }) });
+    if (res.ok) {
+      await loadCameras();
+    }
   }
 
   function handleTrainingSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -155,7 +158,9 @@ export default function PortalPage() {
         </div>
         <div className="flex gap-2">
           <Link href="/store"><Button variant="outline">Marketplace</Button></Link>
-          <Link href="/admin"><Button variant="outline">Admin</Button></Link>
+          {(me?.user.role === 'admin' || me?.user.role === 'reseller') && (
+            <Link href="/admin"><Button variant="outline">Admin</Button></Link>
+          )}
         </div>
       </header>
 
@@ -323,7 +328,7 @@ export default function PortalPage() {
           <h2 className="font-semibold mb-2">Account Details</h2>
           <form className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
-              <input className="rounded-md border bg-background p-2 text-sm" placeholder="{audience === 'consumer' ? 'Full Name' : 'Company Name'}" defaultValue={audience === 'consumer' ? 'Alex Johnson' : 'Acme Co.'} />
+              <input className="rounded-md border bg-background p-2 text-sm" placeholder={audience === 'consumer' ? 'Full Name' : 'Company Name'} defaultValue={audience === 'consumer' ? 'Alex Johnson' : 'Acme Co.'} />
               <input className="rounded-md border bg-background p-2 text-sm" placeholder="Email" defaultValue="ops@acme.co" />
             </div>
             <input className="w-full rounded-md border bg-background p-2 text-sm" placeholder="Billing Address" defaultValue="123 Main St, Springfield" />

@@ -84,22 +84,18 @@ export default function LoginPage() {
       <div className="rounded-xl border p-4 bg-card text-card-foreground">
         <div className="font-medium mb-1">Or jump right in</div>
         <p className="text-sm text-muted-foreground mb-3">Use demo accounts:</p>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 mb-3">
           <Button size="sm" variant="outline" onClick={() => quickLogin("admin")}>Admin</Button>
           <Button size="sm" variant="outline" onClick={() => quickLogin("reseller")}>Reseller</Button>
           <Button size="sm" variant="outline" onClick={() => quickLogin("business")}>Business</Button>
           <Button size="sm" variant="outline" onClick={() => quickLogin("consumer")}>Consumer</Button>
         </div>
-      </div>
-
-      <div className="rounded-xl border p-4 bg-card text-card-foreground">
-        <div className="font-medium mb-1">Or jump right in</div>
-        <p className="text-sm text-muted-foreground mb-3">Try the portal and explore the marketplace while on trial.</p>
         <div className="flex gap-2">
           <Link href="/portal"><Button size="sm">Start Free Trial</Button></Link>
           <Link href="/store"><Button size="sm" variant="outline">Explore Marketplace</Button></Link>
         </div>
       </div>
+
     </div>
   );
 }

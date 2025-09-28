@@ -84,5 +84,7 @@
       "name": "Retail Assistant",
       "status": "stopped"
     }
-  ]
+  ],
+  "securityAlerts": [],
+  "cameras": []
 }

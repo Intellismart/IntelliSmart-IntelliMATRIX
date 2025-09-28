@@ -13,7 +13,14 @@ async function loadDb(): Promise<DbSchema> {
   await ensureDir();
   try {
     const raw = await fs.readFile(dbFile, "utf-8");
-    return JSON.parse(raw) as DbSchema;
+    const db = JSON.parse(raw) as any;
+    let migrated = false;
+    if (!db.securityAlerts) { db.securityAlerts = []; migrated = true; }
+    if (!db.cameras) { db.cameras = []; migrated = true; }
+    if (migrated) {
+      await fs.writeFile(dbFile, JSON.stringify(db, null, 2), "utf-8");
+    }
+    return db as DbSchema;
   } catch (e: any) {
     if (e.code === "ENOENT") {
       const seeded = seed();

@@ -11,22 +11,27 @@ export async function GET() {
   const tenantId = auth.session.tenantId || auth.user.tenantId || "";
 
   const encoder = new TextEncoder();
+  let hb: any;
+  let onAgentUpdate: any;
+  let onSecurityAlert: any;
+  let onCameraUpdate: any;
+
   const stream = new ReadableStream({
     start(controller) {
       const send = (data: any) => {
         controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
       };
-      const onAgentUpdate = (payload: any) => {
+      onAgentUpdate = (payload: any) => {
         if (payload.tenantId === tenantId) {
           send({ type: "agent_update", payload });
         }
       };
-      const onSecurityAlert = (payload: any) => {
+      onSecurityAlert = (payload: any) => {
         if (payload.tenantId === tenantId) {
           send({ type: "security_alert", payload });
         }
       };
-      const onCameraUpdate = (payload: any) => {
+      onCameraUpdate = (payload: any) => {
         if (payload.tenantId === tenantId) {
           send({ type: "camera_update", payload });
         }
@@ -36,19 +41,19 @@ export async function GET() {
       bus.on("camera_update", onCameraUpdate);
 
       // heartbeat
-      const hb = setInterval(() => {
+      hb = setInterval(() => {
         controller.enqueue(encoder.encode(": keep-alive\n\n"));
       }, 25000);
 
       // initial event to confirm connected
       send({ type: "connected" });
-
-      return () => {
-        clearInterval(hb);
-        bus.off("agent_update", onAgentUpdate);
-      };
     },
-    cancel() {},
+    cancel() {
+      if (hb) clearInterval(hb);
+      if (onAgentUpdate) bus.off("agent_update", onAgentUpdate);
+      if (onSecurityAlert) bus.off("security_alert", onSecurityAlert);
+      if (onCameraUpdate) bus.off("camera_update", onCameraUpdate);
+    },
   });
 
   return new Response(stream, {

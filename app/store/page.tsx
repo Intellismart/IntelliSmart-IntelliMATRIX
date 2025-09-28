@@ -56,6 +56,21 @@ export default function StorePage() {
         ))}
       </section>
 
+      <section id="robotics" className="rounded-xl border p-6 bg-card text-card-foreground">
+        <h2 className="font-semibold mb-2">Robotics</h2>
+        <p className="text-sm text-muted-foreground">Robotics catalog is coming soon. Explore our AI Agents while we prepare this section.</p>
+      </section>
+
+      <section id="drones" className="rounded-xl border p-6 bg-card text-card-foreground">
+        <h2 className="font-semibold mb-2">Drones</h2>
+        <p className="text-sm text-muted-foreground">Our drone offerings are in progress. Check back shortly.</p>
+      </section>
+
+      <section id="smart-home" className="rounded-xl border p-6 bg-card text-card-foreground">
+        <h2 className="font-semibold mb-2">Smart Home</h2>
+        <p className="text-sm text-muted-foreground">Smart home bundles and devices will appear here soon.</p>
+      </section>
+
       <section className="rounded-xl border p-6 bg-card text-card-foreground">
         <h2 className="font-semibold mb-2">14‑Day Free Trial</h2>
         <p className="text-sm text-muted-foreground mb-4">
