@@ -1,0 +1,88 @@
+{
+  "tenants": [
+    {
+      "id": "acme",
+      "name": "Acme Corporation",
+      "createdAt": "2025-09-28T10:09:58.009Z"
+    },
+    {
+      "id": "home-123",
+      "name": "Home 123",
+      "createdAt": "2025-09-28T10:09:58.009Z"
+    },
+    {
+      "id": "client-1",
+      "name": "Client One",
+      "createdAt": "2025-09-28T10:09:58.009Z"
+    }
+  ],
+  "users": [
+    {
+      "id": "u-admin",
+      "email": "admin@acme.co",
+      "name": "Admin",
+      "role": "admin",
+      "tenantId": "acme",
+      "password": "admin"
+    },
+    {
+      "id": "u-biz",
+      "email": "ops@acme.co",
+      "name": "Ops Manager",
+      "role": "business",
+      "tenantId": "acme",
+      "password": "demo"
+    },
+    {
+      "id": "u-consumer",
+      "email": "consumer@example.com",
+      "name": "Alex Johnson",
+      "role": "consumer",
+      "tenantId": "home-123",
+      "password": "demo"
+    },
+    {
+      "id": "u-reseller",
+      "email": "reseller@example.com",
+      "name": "Reseller Rep",
+      "role": "reseller",
+      "managedTenantIds": [
+        "client-1",
+        "acme"
+      ],
+      "password": "demo"
+    }
+  ],
+  "agents": [
+    {
+      "id": "a1",
+      "tenantId": "acme",
+      "name": "Support Agent",
+      "status": "running"
+    },
+    {
+      "id": "a2",
+      "tenantId": "acme",
+      "name": "Sales SDR",
+      "status": "stopped"
+    },
+    {
+      "id": "a3",
+      "tenantId": "acme",
+      "name": "Ops Automation",
+      "status": "running"
+    },
+    {
+      "id": "a4",
+      "tenantId": "home-123",
+      "name": "Home Helper",
+      "status": "running"
+    },
+    {
+      "id": "a5",
+      "tenantId": "client-1",
+      "name": "Retail Assistant",
+      "status": "stopped"
+    }
+  ]
+}

@@ -58,3 +58,59 @@ You can edit pages in the `app/` directory; the page auto‑updates as you edit.
 - Add zero‑trust connectors and audit logging for data access.
 - Implement agent runtime controls, metrics, and training data ingestion APIs.
 - Harden security, permissions, and admin tooling.
+
+
+---
+
+## Production Demo Backend (added)
+This repository now includes a working production demo backend suitable for user testing:
+- Auth: cookie sessions with signed tokens and demo accounts.
+- Tenancy: per-tenant scoping for agents/users with reseller multi-tenant support.
+- RBAC: role-aware endpoints (admin, reseller, business, consumer).
+- Real‑time: Server‑Sent Events stream for live agent status updates.
+- Persistence: file‑based JSON store (data/db.json) with atomic writes and seed data.
+- Middleware: protects /portal and /admin (redirects to /login if unauthenticated).
+
+### Demo Accounts
+- Admin: admin@acme.co / admin
+- Business: ops@acme.co / demo
+- Consumer: consumer@example.com / demo
+- Reseller: reseller@example.com / demo
+
+Use the quick login buttons on /login to try these instantly.
+
+### Key API Endpoints
+- POST /api/login — sign in and set session cookie
+- POST /api/logout — clear session
+- GET  /api/me — current user + active tenant
+- GET/POST /api/agents — list/create agents in active tenant
+- POST /api/agents/:id/toggle — start/stop an agent (emits SSE event)
+- GET  /api/events — SSE stream (agent_update, heartbeat)
+- GET/POST /api/tenants — list/create tenants (admin/reseller)
+- POST /api/tenant/select — set active tenant (admin/reseller)
+- GET/POST /api/users — list/invite users (admin/reseller; tenant-scoped)
+
+### Admin & Portal Enhancements
+- Admin now lists tenants and users with inline create/invite forms.
+- Portal loads agents from the backend, toggles via API, and stays in sync through SSE.
+- Resellers/Admins can switch the active tenant from within the Portal.
+- Navbar shows current role and tenant; includes Sign out.
+
+### Running the Demo
+1) npm install
+2) npm run dev
+3) Visit http://localhost:3000/login and click a quick login (e.g., Admin).
+4) Open /portal to manage agents. Start/Stop updates stream in real time.
+5) As a Reseller or Admin, open the Tenant selector in Portal to switch tenants.
+6) Open /admin to create tenants and invite users.
+
+Notes:
+- This is a demo; credentials are stored in data/db.json in plain text.
+- SSE works per-tenant. Multiple browser windows signed into the same tenant will all update.
+- The file store persists between restarts (data/db.json). Delete it to reseed.
+
+### What’s Next (beyond demo)
+- Replace demo auth with NextAuth/SSO; hash passwords; add CSRF.
+- Move persistence to a durable DB (e.g., Postgres + Prisma) and add migrations.
+- Add audit logs, rate limits, and permissions enforcement at resource level.
+- Implement billing (Stripe), marketplace checkout, and device/agent runtimes.

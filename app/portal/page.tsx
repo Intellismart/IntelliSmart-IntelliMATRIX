@@ -13,28 +13,62 @@ type Agent = {
 
 type Audience = "consumer" | "business" | "reseller";
 
-const initialAgents: Agent[] = [
-  { id: "a1", name: "Support Agent", status: "running" },
-  { id: "a2", name: "Sales SDR", status: "stopped" },
-  { id: "a3", name: "Ops Automation", status: "running" },
-];
-
 export default function PortalPage() {
   const search = useSearchParams();
   const router = useRouter();
-  const initialMode = (search.get("mode") as Audience) || "business";
-  const [audience, setAudience] = useState<Audience>(initialMode);
-
-  const [agents, setAgents] = useState<Agent[]>(initialAgents);
+  const [audience, setAudience] = useState<Audience>((search.get("mode") as Audience) || "business");
+  const [agents, setAgents] = useState<Agent[]>([]);
   const [uploadNote, setUploadNote] = useState<string>("");
   const [plan, setPlan] = useState<{ name: string; trialDaysLeft: number | null }>({ name: "Pro (Trial)", trialDaysLeft: 14 });
+  const [tenants, setTenants] = useState<{ id: string; name: string }[]>([]);
+  const [me, setMe] = useState<{ user: { role: Audience }; tenant?: { id: string; name: string } } | null>(null);
 
+  // keep URL in sync
   useEffect(() => {
     const sp = new URLSearchParams(search.toString());
     sp.set("mode", audience);
     router.replace(`/portal?${sp.toString()}`);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [audience]);
+
+  // load session and default audience from role
+  useEffect(() => {
+    (async () => {
+      const res = await fetch("/api/me");
+      if (res.ok) {
+        const j = await res.json();
+        setMe(j);
+        setAudience((search.get("mode") as Audience) || j.user.role || "business");
+      }
+    })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // load agents
+  async function loadAgents() {
+    const res = await fetch("/api/agents");
+    if (res.ok) {
+      const j = await res.json();
+      setAgents(j.agents || []);
+    }
+  }
+
+  useEffect(() => { loadAgents(); }, []);
+
+  // SSE for realtime updates
+  useEffect(() => {
+    const es = new EventSource("/api/events");
+    es.onmessage = (ev) => {
+      try {
+        const data = JSON.parse(ev.data);
+        if (data?.type === "agent_update") {
+          const { agentId, status } = data.payload;
+          setAgents(prev => prev.map(a => a.id === agentId ? { ...a, status } : a));
+        }
+      } catch {}
+    };
+    return () => { es.close(); };
+  }, []);
 
   const kpis = useMemo(
     () => [
@@ -46,7 +80,9 @@ export default function PortalPage() {
     [agents, audience]
   );
 
-  function toggleAgent(id: string) {
+  async function toggleAgent(id: string) {
+    await fetch(`/api/agents/${id}/toggle`, { method: "POST" });
+    // optimistic update is handled by SSE too
     setAgents(prev => prev.map(a => a.id === id ? { ...a, status: a.status === "running" ? "stopped" : "running" } : a));
   }
 
@@ -54,6 +90,17 @@ export default function PortalPage() {
     e.preventDefault();
     setUploadNote("Training data received. Indexing & fine-tune job queued (demo stub).");
   }
+
+  async function switchTenant(tid: string) {
+    await fetch('/api/tenant/select', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tenantId: tid }) });
+    await loadAgents();
+  }
+
+  useEffect(() => {
+    if (me?.user.role === 'reseller' || me?.user.role === 'admin') {
+      fetch('/api/tenants').then(r => r.json()).then(j => setTenants(j.tenants || [])).catch(()=>{});
+    }
+  }, [me]);
 
   return (
     <div className="space-y-8">
@@ -70,10 +117,25 @@ export default function PortalPage() {
 
       {/* Audience toggle */}
       <section className="rounded-xl border p-2 bg-card text-card-foreground">
-        <div className="flex flex-wrap gap-2">
-          <ToggleBtn label="Business" active={audience === "business"} onClick={() => setAudience("business")} />
-          <ToggleBtn label="Consumer" active={audience === "consumer"} onClick={() => setAudience("consumer")} />
-          <ToggleBtn label="Reseller" active={audience === "reseller"} onClick={() => setAudience("reseller")} />
+        <div className="flex flex-wrap items-center gap-2 justify-between">
+          <div className="flex flex-wrap gap-2">
+            <ToggleBtn label="Business" active={audience === "business"} onClick={() => setAudience("business")} />
+            <ToggleBtn label="Consumer" active={audience === "consumer"} onClick={() => setAudience("consumer")} />
+            <ToggleBtn label="Reseller" active={audience === "reseller"} onClick={() => setAudience("reseller")} />
+          </div>
+          {(me?.user.role === 'reseller' || me?.user.role === 'admin') && (
+            <div className="flex items-center gap-2 text-xs">
+              <span className="text-muted-foreground">Tenant:</span>
+              <select className="rounded-md border bg-background px-2 py-1" onChange={(e)=>switchTenant(e.target.value)} value={me?.tenant?.id || ''}>
+                {(me?.tenant?.id && !tenants.find(t=>t.id===me.tenant!.id)) && (
+                  <option value={me.tenant!.id}>{me.tenant!.name}</option>
+                )}
+                {tenants.map(t => (
+                  <option key={t.id} value={t.id}>{t.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
         <div className="mt-2 text-xs text-muted-foreground">
           {audience === "business" && "Business: multi-user, billing, SLAs, and fleet controls."}

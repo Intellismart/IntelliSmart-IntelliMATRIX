@@ -1,9 +1,11 @@
 import Link from "next/link";
 
+import UserMenu from "./UserMenu";
+
 export default function Navbar() {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto flex h-16 items-center justify-between px-4">
+      <div className="container mx-auto flex h-16 items-center justify-between px-4 gap-4">
         <Link href="/" className="font-semibold text-lg">
           IntelliSMART AI Factory
         </Link>
@@ -18,6 +20,7 @@ export default function Navbar() {
           <Link href="/portal" className="px-3 py-2 rounded-md hover:bg-accent hover:text-accent-foreground whitespace-nowrap">Portal</Link>
           <Link href="/resellers" className="px-3 py-2 rounded-md hover:bg-accent hover:text-accent-foreground whitespace-nowrap">Resellers</Link>
         </nav>
+        <UserMenu />
       </div>
     </header>
   );
