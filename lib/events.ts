@@ -2,6 +2,8 @@ import { EventEmitter } from "events";
 
 type EventMap = {
   agent_update: { tenantId: string; agentId: string; status: "running" | "stopped" };
+  security_alert: { tenantId: string; alertId: string; severity: "low" | "medium" | "high" | "critical"; status: "open" | "ack" | "resolved" };
+  camera_update: { tenantId: string; cameraId: string; online?: boolean; recording?: boolean };
 };
 
 type EventKey = keyof EventMap;

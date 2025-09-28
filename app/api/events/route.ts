@@ -21,7 +21,19 @@ export async function GET() {
           send({ type: "agent_update", payload });
         }
       };
+      const onSecurityAlert = (payload: any) => {
+        if (payload.tenantId === tenantId) {
+          send({ type: "security_alert", payload });
+        }
+      };
+      const onCameraUpdate = (payload: any) => {
+        if (payload.tenantId === tenantId) {
+          send({ type: "camera_update", payload });
+        }
+      };
       bus.on("agent_update", onAgentUpdate);
+      bus.on("security_alert", onSecurityAlert);
+      bus.on("camera_update", onCameraUpdate);
 
       // heartbeat
       const hb = setInterval(() => {

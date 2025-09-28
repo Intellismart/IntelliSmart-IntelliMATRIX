@@ -11,6 +11,9 @@ type Agent = {
   status: "running" | "stopped";
 };
 
+type SecurityAlert = { id: string; title: string; severity: "low" | "medium" | "high" | "critical"; status: "open" | "ack" | "resolved"; time: string; source: string };
+type Camera = { id: string; name: string; online: boolean; recording: boolean; location?: string; lastSeen: string };
+
 type Audience = "consumer" | "business" | "reseller";
 
 export default function PortalPage() {
@@ -18,6 +21,8 @@ export default function PortalPage() {
   const router = useRouter();
   const [audience, setAudience] = useState<Audience>((search.get("mode") as Audience) || "business");
   const [agents, setAgents] = useState<Agent[]>([]);
+  const [alerts, setAlerts] = useState<SecurityAlert[]>([]);
+  const [cameras, setCameras] = useState<Camera[]>([]);
   const [uploadNote, setUploadNote] = useState<string>("");
   const [plan, setPlan] = useState<{ name: string; trialDaysLeft: number | null }>({ name: "Pro (Trial)", trialDaysLeft: 14 });
   const [tenants, setTenants] = useState<{ id: string; name: string }[]>([]);
@@ -52,8 +57,22 @@ export default function PortalPage() {
       setAgents(j.agents || []);
     }
   }
+  async function loadAlerts() {
+    const res = await fetch("/api/security/alerts");
+    if (res.ok) {
+      const j = await res.json();
+      setAlerts(j.alerts || []);
+    }
+  }
+  async function loadCameras() {
+    const res = await fetch("/api/cameras");
+    if (res.ok) {
+      const j = await res.json();
+      setCameras(j.cameras || []);
+    }
+  }
 
-  useEffect(() => { loadAgents(); }, []);
+  useEffect(() => { loadAgents(); loadAlerts(); loadCameras(); }, []);
 
   // SSE for realtime updates
   useEffect(() => {
@@ -64,6 +83,12 @@ export default function PortalPage() {
         if (data?.type === "agent_update") {
           const { agentId, status } = data.payload;
           setAgents(prev => prev.map(a => a.id === agentId ? { ...a, status } : a));
+        } else if (data?.type === "security_alert") {
+          // Refresh alerts list on any security alert event
+          loadAlerts();
+        } else if (data?.type === "camera_update") {
+          const { cameraId, online, recording } = data.payload;
+          setCameras(prev => prev.map(c => c.id === cameraId ? { ...c, online: online ?? c.online, recording: recording ?? c.recording, lastSeen: new Date().toISOString() } : c));
         }
       } catch {}
     };
@@ -84,6 +109,25 @@ export default function PortalPage() {
     await fetch(`/api/agents/${id}/toggle`, { method: "POST" });
     // optimistic update is handled by SSE too
     setAgents(prev => prev.map(a => a.id === id ? { ...a, status: a.status === "running" ? "stopped" : "running" } : a));
+  }
+
+  async function runSecurityScan(scope?: string) {
+    await fetch('/api/security/scan', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ scope }) });
+    await loadAlerts();
+  }
+
+  async function setAlertStatus(id: string, status: 'open' | 'ack' | 'resolved') {
+    await fetch(`/api/security/alerts/${id}/status`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) });
+    await loadAlerts();
+  }
+
+  async function addCamera(name?: string) {
+    await fetch('/api/cameras', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) });
+    await loadCameras();
+  }
+
+  async function toggleCamera(id: string, field: 'recording' | 'online' = 'recording') {
+    await fetch(`/api/cameras/${id}/toggle`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ field }) });
   }
 
   function handleTrainingSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -179,6 +223,48 @@ export default function PortalPage() {
           <div className="flex gap-2">
             <Button size="sm">New Scene</Button>
             <Button size="sm" variant="outline">Energy</Button>
+          </div>
+        </DomainCard>
+        <DomainCard title="Cybersecurity" subtitle={audience === "consumer" ? "Home network & devices" : audience === "reseller" ? "Client posture" : "Zero‑trust posture"}>
+          <div className="flex gap-2 mb-3">
+            <Button size="sm" onClick={() => runSecurityScan('network')}>Run Scan</Button>
+            <Button size="sm" variant="outline" onClick={() => runSecurityScan('camera')}>Scan Cameras</Button>
+          </div>
+          <div className="space-y-2">
+            {alerts.slice(0,5).map((a) => (
+              <div key={a.id} className="flex items-center justify-between rounded-md border p-2">
+                <div>
+                  <div className="text-sm font-medium">{a.title}</div>
+                  <div className="text-xs text-muted-foreground">{a.severity.toUpperCase()} · {new Date(a.time).toLocaleString()} · {a.source}</div>
+                </div>
+                <div className="flex gap-2">
+                  {a.status !== 'ack' && <Button size="sm" variant="outline" onClick={() => setAlertStatus(a.id,'ack')}>Ack</Button>}
+                  {a.status !== 'resolved' && <Button size="sm" onClick={() => setAlertStatus(a.id,'resolved')}>Resolve</Button>}
+                </div>
+              </div>
+            ))}
+            {alerts.length === 0 && <div className="text-xs text-muted-foreground">No alerts.</div>}
+          </div>
+        </DomainCard>
+        <DomainCard title="Camera Security" subtitle={audience === "consumer" ? "Home cameras" : audience === "reseller" ? "Client CCTV" : "Cameras & NVRs"}>
+          <div className="flex gap-2 mb-3">
+            <Button size="sm" onClick={() => addCamera()}>Add Camera</Button>
+            <Button size="sm" variant="outline">View Streams</Button>
+          </div>
+          <div className="space-y-2">
+            {cameras.slice(0,5).map((c) => (
+              <div key={c.id} className="flex items-center justify-between rounded-md border p-2">
+                <div>
+                  <div className="text-sm font-medium">{c.name} <span className="text-xs text-muted-foreground">({c.location || 'Unknown'})</span></div>
+                  <div className="text-xs text-muted-foreground">Online: {String(c.online)} · Recording: {String(c.recording)}</div>
+                </div>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" onClick={() => toggleCamera(c.id,'online')}>{c.online ? 'Go Offline' : 'Go Online'}</Button>
+                  <Button size="sm" onClick={() => toggleCamera(c.id,'recording')}>{c.recording ? 'Stop Rec' : 'Start Rec'}</Button>
+                </div>
+              </div>
+            ))}
+            {cameras.length === 0 && <div className="text-xs text-muted-foreground">No cameras.</div>}
           </div>
         </DomainCard>
       </section>

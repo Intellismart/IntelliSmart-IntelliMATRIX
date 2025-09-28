@@ -1,6 +1,6 @@
 import { promises as fs } from "fs";
 import path from "path";
-import { Agent, DbSchema, Tenant, User } from "./types";
+import { Agent, DbSchema, Tenant, User, SecurityAlert, Camera } from "./types";
 
 const dataDir = path.join(process.cwd(), "data");
 const dbFile = path.join(dataDir, "db.json");
@@ -51,7 +51,17 @@ function seed(): DbSchema {
     { id: "a4", tenantId: "home-123", name: "Home Helper", status: "running" },
     { id: "a5", tenantId: "client-1", name: "Retail Assistant", status: "stopped" },
   ];
-  return { tenants, users, agents };
+  const cameras: Camera[] = [
+    { id: "cam1", tenantId: "acme", name: "Front Entrance", location: "HQ - Lobby", online: true, recording: true, lastSeen: now },
+    { id: "cam2", tenantId: "acme", name: "Warehouse Aisle 3", location: "DC-1", online: true, recording: false, lastSeen: now },
+    { id: "cam3", tenantId: "home-123", name: "Doorbell", location: "Front Door", online: true, recording: true, lastSeen: now }
+  ];
+  const securityAlerts: SecurityAlert[] = [
+    { id: "sec1", tenantId: "acme", severity: "medium", source: "network", title: "Unusual outbound traffic", description: "Spike detected to unknown ASN.", time: now, status: "open" },
+    { id: "sec2", tenantId: "acme", severity: "high", source: "camera", title: "Motion after hours", description: "Movement detected in restricted zone.", time: now, status: "ack" },
+    { id: "sec3", tenantId: "home-123", severity: "low", source: "endpoint", title: "Outdated firmware", description: "Robot vacuum needs update.", time: now, status: "open" }
+  ];
+  return { tenants, users, agents, securityAlerts, cameras };
 }
 
 // Simple mutex to avoid concurrent write corruption in dev

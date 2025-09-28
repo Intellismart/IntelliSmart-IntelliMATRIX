@@ -31,8 +31,31 @@ export type Session = {
   iat: number;
 };
 
+export type SecurityAlert = {
+  id: string;
+  tenantId: string;
+  severity: "low" | "medium" | "high" | "critical";
+  source: "endpoint" | "network" | "camera" | "cloud";
+  title: string;
+  description?: string;
+  time: string; // ISO
+  status: "open" | "ack" | "resolved";
+};
+
+export type Camera = {
+  id: string;
+  tenantId: string;
+  name: string;
+  location?: string;
+  online: boolean;
+  recording: boolean;
+  lastSeen: string; // ISO
+};
+
 export type DbSchema = {
   tenants: Tenant[];
   users: User[];
   agents: Agent[];
+  securityAlerts: SecurityAlert[];
+  cameras: Camera[];
 };

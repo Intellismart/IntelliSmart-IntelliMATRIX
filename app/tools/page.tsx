@@ -18,6 +18,14 @@ export default function ToolsPage() {
           <div className="font-medium mb-1">KPI Calculator</div>
           <div className="text-sm text-muted-foreground">Estimate ROI and costs (placeholder).</div>
         </li>
+        <li className="rounded-xl border p-5 bg-card text-card-foreground">
+          <div className="font-medium mb-1">Vulnerability Scanner</div>
+          <div className="text-sm text-muted-foreground">Run a quick posture scan for your tenant (demo stub).</div>
+        </li>
+        <li className="rounded-xl border p-5 bg-card text-card-foreground">
+          <div className="font-medium mb-1">Camera Stream Analyzer</div>
+          <div className="text-sm text-muted-foreground">Detect motion anomalies in sample streams (placeholder).</div>
+        </li>
       </ul>
       <div>
         <Link href="/store" className="underline">Explore the marketplace</Link>
