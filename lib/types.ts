@@ -52,10 +52,21 @@ export type Camera = {
   lastSeen: string; // ISO
 };
 
+export type Transport = {
+  id: string;
+  tenantId: string;
+  vehicleId: string;
+  kind: "shuttle" | "rover" | "robotaxi" | "delivery";
+  status: "pending" | "approved" | "active" | "inactive";
+  location?: string;
+  updatedAt: string;
+};
+
 export type DbSchema = {
   tenants: Tenant[];
   users: User[];
   agents: Agent[];
   securityAlerts: SecurityAlert[];
   cameras: Camera[];
+  transports: Transport[];
 };

@@ -14,7 +14,10 @@ type Agent = {
 type SecurityAlert = { id: string; title: string; severity: "low" | "medium" | "high" | "critical"; status: "open" | "ack" | "resolved"; time: string; source: string };
 type Camera = { id: string; name: string; online: boolean; recording: boolean; location?: string; lastSeen: string };
 
+type Transport = { id: string; vehicleId: string; kind: "shuttle" | "rover" | "robotaxi" | "delivery"; status: "pending" | "approved" | "active" | "inactive"; location?: string; updatedAt: string };
+
 type Audience = "consumer" | "business" | "reseller";
+ type RoleLocal = Audience | "admin";
 
 export default function PortalPage() {
   const search = useSearchParams();
@@ -23,10 +26,11 @@ export default function PortalPage() {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [alerts, setAlerts] = useState<SecurityAlert[]>([]);
   const [cameras, setCameras] = useState<Camera[]>([]);
+  const [transports, setTransports] = useState<Transport[]>([]);
   const [uploadNote, setUploadNote] = useState<string>("");
   const [plan, setPlan] = useState<{ name: string; trialDaysLeft: number | null }>({ name: "Pro (Trial)", trialDaysLeft: 14 });
   const [tenants, setTenants] = useState<{ id: string; name: string }[]>([]);
-  const [me, setMe] = useState<{ user: { role: Audience }; tenant?: { id: string; name: string } } | null>(null);
+  const [me, setMe] = useState<{ user: { role: RoleLocal }; tenant?: { id: string; name: string } } | null>(null);
 
   // keep URL in sync
   useEffect(() => {

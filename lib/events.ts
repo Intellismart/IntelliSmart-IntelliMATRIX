@@ -4,6 +4,7 @@ type EventMap = {
   agent_update: { tenantId: string; agentId: string; status: "running" | "stopped" };
   security_alert: { tenantId: string; alertId: string; severity: "low" | "medium" | "high" | "critical"; status: "open" | "ack" | "resolved" };
   camera_update: { tenantId: string; cameraId: string; online?: boolean; recording?: boolean };
+  transport_update: { tenantId: string; transportId: string; status: "pending" | "approved" | "active" | "inactive" };
 };
 
 type EventKey = keyof EventMap;

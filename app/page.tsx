@@ -52,11 +52,8 @@ export default function HomePage() {
       </section>
 
       {/* Dynamic widgets */}
-      {/* @ts-expect-error Async Server Component */}
       <NewsWidget />
-      {/* @ts-expect-error Async Server Component */}
       <ReviewsWidget />
-      {/* @ts-expect-error Async Server Component */}
       <TipsWidget />
     </div>
   );

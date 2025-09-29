@@ -1,6 +1,6 @@
 import { promises as fs } from "fs";
 import path from "path";
-import { Agent, DbSchema, Tenant, User, SecurityAlert, Camera } from "./types";
+import { Agent, DbSchema, Tenant, User, SecurityAlert, Camera, Transport } from "./types";
 
 const dataDir = path.join(process.cwd(), "data");
 const dbFile = path.join(dataDir, "db.json");
@@ -17,6 +17,7 @@ async function loadDb(): Promise<DbSchema> {
     let migrated = false;
     if (!db.securityAlerts) { db.securityAlerts = []; migrated = true; }
     if (!db.cameras) { db.cameras = []; migrated = true; }
+    if (!db.transports) { (db as any).transports = []; migrated = true; }
     if (migrated) {
       await fs.writeFile(dbFile, JSON.stringify(db, null, 2), "utf-8");
     }
@@ -68,7 +69,11 @@ function seed(): DbSchema {
     { id: "sec2", tenantId: "acme", severity: "high", source: "camera", title: "Motion after hours", description: "Movement detected in restricted zone.", time: now, status: "ack" },
     { id: "sec3", tenantId: "home-123", severity: "low", source: "endpoint", title: "Outdated firmware", description: "Robot vacuum needs update.", time: now, status: "open" }
   ];
-  return { tenants, users, agents, securityAlerts, cameras };
+  const transports: Transport[] = [
+    { id: "t1", tenantId: "acme", vehicleId: "ACME-SHUT-001", kind: "shuttle", status: "active", location: "HQ Campus", updatedAt: now },
+    { id: "t2", tenantId: "client-1", vehicleId: "CL1-ROVER-07", kind: "rover", status: "approved", location: "Client One DC", updatedAt: now }
+  ];
+  return { tenants, users, agents, securityAlerts, cameras, transports };
 }
 
 // Simple mutex to avoid concurrent write corruption in dev

@@ -7,6 +7,8 @@ Contents:
 - sitemap.md — Human-readable site map of all routes and APIs.
 - site-design.md — UX/UI design, components, and frontend architecture.
 - security-design.md — Security posture, auth, tenancy, and controls.
+- operations.md — Ops guide for running, rebooting, and clearing caches.
+- changelog.md — Append-only record of changes after initial demo.
 
 How to use:
 - Start with as-built.md for a complete picture.

@@ -15,6 +15,7 @@ export async function GET() {
   let onAgentUpdate: any;
   let onSecurityAlert: any;
   let onCameraUpdate: any;
+  let onTransportUpdate: any;
 
   const stream = new ReadableStream({
     start(controller) {
@@ -36,9 +37,15 @@ export async function GET() {
           send({ type: "camera_update", payload });
         }
       };
+      onTransportUpdate = (payload: any) => {
+        if (payload.tenantId === tenantId) {
+          send({ type: "transport_update", payload });
+        }
+      };
       bus.on("agent_update", onAgentUpdate);
       bus.on("security_alert", onSecurityAlert);
       bus.on("camera_update", onCameraUpdate);
+      bus.on("transport_update", onTransportUpdate);
 
       // heartbeat
       hb = setInterval(() => {
@@ -53,6 +60,7 @@ export async function GET() {
       if (onAgentUpdate) bus.off("agent_update", onAgentUpdate);
       if (onSecurityAlert) bus.off("security_alert", onSecurityAlert);
       if (onCameraUpdate) bus.off("camera_update", onCameraUpdate);
+      if (onTransportUpdate) bus.off("transport_update", onTransportUpdate);
     },
   });
 

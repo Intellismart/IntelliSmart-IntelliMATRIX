@@ -12,15 +12,18 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
   const tenantId = auth.session.tenantId || auth.user.tenantId;
   if (!tenantId) return NextResponse.json({ error: "No tenant selected" }, { status: 400 });
   const { status } = await req.json().catch(() => ({}));
-  if (!status || !["open","ack","resolved"].includes(status)) return NextResponse.json({ error: "invalid status" }, { status: 400 });
+  if (!status || !["pending","approved","active","inactive"].includes(status)) return NextResponse.json({ error: "invalid status" }, { status: 400 });
   const { id } = await context.params;
   const db = await readDb();
-  const alert = (db.securityAlerts || []).find(a => a.id === id && a.tenantId === tenantId);
-  if (!alert) return NextResponse.json({ error: "Alert not found" }, { status: 404 });
+  const t = (db.transports || []).find(x => x.id === id && x.tenantId === tenantId);
+  if (!t) return NextResponse.json({ error: "Transport not found" }, { status: 404 });
   await writeDb(d => {
-    const a = (d.securityAlerts || []).find(x => x.id === id && x.tenantId === tenantId);
-    if (a) (a as any).status = status;
+    const item = (d.transports || []).find(x => x.id === id && x.tenantId === tenantId);
+    if (item) {
+      (item as any).status = status;
+      (item as any).updatedAt = new Date().toISOString();
+    }
   });
-  bus.emit("security_alert", { tenantId, alertId: id, severity: alert.severity, status });
+  bus.emit("transport_update", { tenantId, transportId: id, status });
   return NextResponse.json({ ok: true, status });
 }
