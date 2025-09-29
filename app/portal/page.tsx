@@ -26,6 +26,7 @@ export default function PortalPage() {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [alerts, setAlerts] = useState<SecurityAlert[]>([]);
   const [cameras, setCameras] = useState<Camera[]>([]);
+  const [transports, setTransports] = useState<Transport[]>([]);
   const [uploadNote, setUploadNote] = useState<string>("");
   const [plan, setPlan] = useState<{ name: string; trialDaysLeft: number | null }>({ name: "Pro (Trial)", trialDaysLeft: 14 });
   const [tenants, setTenants] = useState<{ id: string; name: string }[]>([]);
@@ -74,8 +75,15 @@ export default function PortalPage() {
       setCameras(j.cameras || []);
     }
   }
+  async function loadTransports() {
+    const res = await fetch("/api/transports");
+    if (res.ok) {
+      const j = await res.json();
+      setTransports(j.transports || []);
+    }
+  }
 
-  useEffect(() => { loadAgents(); loadAlerts(); loadCameras(); }, []);
+  useEffect(() => { loadAgents(); loadAlerts(); loadCameras(); loadTransports(); }, []);
 
   // SSE for realtime updates
   useEffect(() => {
