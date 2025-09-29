@@ -26,9 +26,12 @@ export async function POST(req: Request) {
   if (!title) return NextResponse.json({ error: "title required" }, { status: 400 });
   const id = genId("sec");
   const time = new Date().toISOString();
-  const alert: SecurityAlert = { id, tenantId, title, severity: (severity as any) || "medium", source: (source as any) || "network", description, time, status: "open" };
+  const allowedSeverities: SecurityAlert["severity"][] = ["low", "medium", "high", "critical"];
+  const allowedSources: SecurityAlert["source"][] = ["endpoint", "network", "camera", "cloud"];
+  const sev: SecurityAlert["severity"] = allowedSeverities.includes(severity as SecurityAlert["severity"]) ? (severity as SecurityAlert["severity"]) : "medium";
+  const src: SecurityAlert["source"] = allowedSources.includes(source as SecurityAlert["source"]) ? (source as SecurityAlert["source"]) : "network";
+  const alert: SecurityAlert = { id, tenantId, title, severity: sev, source: src, description, time, status: "open" };
   await writeDb(db => {
-    if (!db.securityAlerts) (db as any).securityAlerts = [];
     db.securityAlerts.push(alert);
   });
   bus.emit("security_alert", { tenantId, alertId: id, severity: alert.severity, status: alert.status });

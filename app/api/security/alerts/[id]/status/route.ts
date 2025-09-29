@@ -11,16 +11,18 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
   if (!auth.ok) return NextResponse.json({ error: auth.message }, { status: auth.status });
   const tenantId = auth.session.tenantId || auth.user.tenantId;
   if (!tenantId) return NextResponse.json({ error: "No tenant selected" }, { status: 400 });
-  const { status } = await req.json().catch(() => ({}));
+  const body = await req.json().catch(() => ({} as { status?: string }));
+  const status = body.status;
   if (!status || !["open","ack","resolved"].includes(status)) return NextResponse.json({ error: "invalid status" }, { status: 400 });
+  const typedStatus = status as import("@/lib/types").SecurityAlert["status"];
   const { id } = await context.params;
   const db = await readDb();
   const alert = (db.securityAlerts || []).find(a => a.id === id && a.tenantId === tenantId);
   if (!alert) return NextResponse.json({ error: "Alert not found" }, { status: 404 });
   await writeDb(d => {
     const a = (d.securityAlerts || []).find(x => x.id === id && x.tenantId === tenantId);
-    if (a) (a as any).status = status;
+    if (a) a.status = typedStatus;
   });
-  bus.emit("security_alert", { tenantId, alertId: id, severity: alert.severity, status });
-  return NextResponse.json({ ok: true, status });
+  bus.emit("security_alert", { tenantId, alertId: id, severity: alert.severity, status: typedStatus });
+  return NextResponse.json({ ok: true, status: typedStatus });
 }

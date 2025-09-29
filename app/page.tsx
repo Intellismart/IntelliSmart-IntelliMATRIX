@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import NewsWidget from "@/components/NewsWidget";
 import TipsWidget from "@/components/TipsWidget";
@@ -22,17 +23,20 @@ export default function HomePage() {
             </div>
           </div>
           <div className="relative">
-            <div className="aspect-[16/10] w-full overflow-hidden rounded-xl border">
-              <img
+            <div className="aspect-[16/10] w-full overflow-hidden rounded-xl border relative">
+              <Image
                 src="https://images.unsplash.com/photo-1518779578993-ec3579fee39f?q=80&w=1600&auto=format&fit=crop"
                 alt="Futuristic robot with glowing accents"
-                className="h-full w-full object-cover"
+                fill
+                sizes="(min-width: 1024px) 50vw, 100vw"
+                className="object-cover"
+                priority
               />
             </div>
             <div className="mt-3 grid grid-cols-3 gap-3">
-              <img className="rounded-lg border object-cover h-28 w-full" src="https://images.unsplash.com/photo-1508614589041-895b88991e3e?q=80&w=800&auto=format&fit=crop" alt="Drone" />
-              <img className="rounded-lg border object-cover h-28 w-full" src="https://images.unsplash.com/photo-1563720223185-11003d516935?q=80&w=800&auto=format&fit=crop" alt="Smart home" />
-              <img className="rounded-lg border object-cover h-28 w-full" src="https://images.unsplash.com/photo-1581092919553-1fb0f6f3c47f?q=80&w=800&auto=format&fit=crop" alt="Circuit AI" />
+              <Image className="rounded-lg border object-cover h-28 w-full" src="https://images.unsplash.com/photo-1508614589041-895b88991e3e?q=80&w=800&auto=format&fit=crop" alt="Drone" width={400} height={112} />
+              <Image className="rounded-lg border object-cover h-28 w-full" src="https://images.unsplash.com/photo-1563720223185-11003d516935?q=80&w=800&auto=format&fit=crop" alt="Smart home" width={400} height={112} />
+              <Image className="rounded-lg border object-cover h-28 w-full" src="https://images.unsplash.com/photo-1581092919553-1fb0f6f3c47f?q=80&w=800&auto=format&fit=crop" alt="Circuit AI" width={400} height={112} />
             </div>
           </div>
         </div>
@@ -48,6 +52,7 @@ export default function HomePage() {
           <CategoryCard title="Smart Home" desc="Robovacs, hubs, automation." href="/store#smart-home" img="https://images.unsplash.com/photo-1573167243877-cb89e39749d7?q=80&w=1200&auto=format&fit=crop" />
           <CategoryCard title="High‑Tech Tools" desc="Testers, sensors, dev kits." href="/store#tools" img="https://images.unsplash.com/photo-1519389950473-47ba0277781c?q=80&w=1200&auto=format&fit=crop" />
           <CategoryCard title="Toys" desc="STEM kits, smart toys, fun bots." href="/store#toys" img="https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1200&auto=format&fit=crop" />
+          <CategoryCard title="Autonomous Delivery" desc="Plan and monitor delivery fleets." href="/delivery" img="https://images.unsplash.com/photo-1563720223185-11003d516935?q=80&w=1200&auto=format&fit=crop" />
         </div>
       </section>
 
@@ -62,8 +67,8 @@ export default function HomePage() {
 function CategoryCard({ title, desc, href, img }: { title: string; desc: string; href: string; img: string }) {
   return (
     <Link href={href} className="group block overflow-hidden rounded-xl border">
-      <div className="aspect-[16/10] w-full overflow-hidden">
-        <img src={img} alt={title} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
+      <div className="aspect-[16/10] w-full overflow-hidden relative">
+        <Image src={img} alt={title} fill sizes="(min-width: 1024px) 25vw, 50vw" className="object-cover transition-transform duration-300 group-hover:scale-105" />
       </div>
       <div className="p-4 bg-card text-card-foreground">
         <div className="font-semibold mb-1">{title}</div>

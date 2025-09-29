@@ -13,17 +13,24 @@ async function loadDb(): Promise<DbSchema> {
   await ensureDir();
   try {
     const raw = await fs.readFile(dbFile, "utf-8");
-    const db = JSON.parse(raw) as any;
-    let migrated = false;
-    if (!db.securityAlerts) { db.securityAlerts = []; migrated = true; }
-    if (!db.cameras) { db.cameras = []; migrated = true; }
-    if (!db.transports) { (db as any).transports = []; migrated = true; }
+    const parsed = JSON.parse(raw) as Partial<DbSchema>;
+    // Ensure all arrays exist (migration of older files)
+    const db: DbSchema = {
+      tenants: parsed.tenants ?? [],
+      users: parsed.users ?? [],
+      agents: parsed.agents ?? [],
+      securityAlerts: parsed.securityAlerts ?? [],
+      cameras: parsed.cameras ?? [],
+      transports: parsed.transports ?? [],
+    };
+    const migrated = !parsed.tenants || !parsed.users || !parsed.agents || !parsed.securityAlerts || !parsed.cameras || !parsed.transports;
     if (migrated) {
       await fs.writeFile(dbFile, JSON.stringify(db, null, 2), "utf-8");
     }
-    return db as DbSchema;
-  } catch (e: any) {
-    if (e.code === "ENOENT") {
+    return db;
+  } catch (e: unknown) {
+    const code = typeof e === "object" && e !== null && "code" in e ? (e as { code?: unknown }).code : undefined;
+    if (code === "ENOENT") {
       const seeded = seed();
       await fs.writeFile(dbFile, JSON.stringify(seeded, null, 2), "utf-8");
       return seeded;

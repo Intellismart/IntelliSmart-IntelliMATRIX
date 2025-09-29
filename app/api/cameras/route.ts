@@ -23,9 +23,8 @@ export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}));
   const { name = "New Camera", location } = body as Partial<Camera>;
   const now = new Date().toISOString();
-  const cam: Camera = { id: genId("cam"), tenantId, name, location, online: true, recording: false, lastSeen: now } as Camera;
+  const cam: Camera = { id: genId("cam"), tenantId, name, location, online: true, recording: false, lastSeen: now };
   await writeDb(db => {
-    if (!db.cameras) (db as any).cameras = [];
     db.cameras.push(cam);
   });
   const db2 = await readDb();

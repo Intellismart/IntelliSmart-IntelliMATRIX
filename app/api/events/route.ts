@@ -1,4 +1,4 @@
-import bus from "@/lib/events";
+import bus, { EventMap } from "@/lib/events";
 import { requireAuth } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
@@ -11,33 +11,33 @@ export async function GET() {
   const tenantId = auth.session.tenantId || auth.user.tenantId || "";
 
   const encoder = new TextEncoder();
-  let hb: any;
-  let onAgentUpdate: any;
-  let onSecurityAlert: any;
-  let onCameraUpdate: any;
-  let onTransportUpdate: any;
+  let hb: ReturnType<typeof setInterval> | null = null;
+  let onAgentUpdate: ((payload: EventMap["agent_update"]) => void) | null = null;
+  let onSecurityAlert: ((payload: EventMap["security_alert"]) => void) | null = null;
+  let onCameraUpdate: ((payload: EventMap["camera_update"]) => void) | null = null;
+  let onTransportUpdate: ((payload: EventMap["transport_update"]) => void) | null = null;
 
   const stream = new ReadableStream({
     start(controller) {
-      const send = (data: any) => {
+      const send = (data: unknown) => {
         controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
       };
-      onAgentUpdate = (payload: any) => {
+      onAgentUpdate = (payload) => {
         if (payload.tenantId === tenantId) {
           send({ type: "agent_update", payload });
         }
       };
-      onSecurityAlert = (payload: any) => {
+      onSecurityAlert = (payload) => {
         if (payload.tenantId === tenantId) {
           send({ type: "security_alert", payload });
         }
       };
-      onCameraUpdate = (payload: any) => {
+      onCameraUpdate = (payload) => {
         if (payload.tenantId === tenantId) {
           send({ type: "camera_update", payload });
         }
       };
-      onTransportUpdate = (payload: any) => {
+      onTransportUpdate = (payload) => {
         if (payload.tenantId === tenantId) {
           send({ type: "transport_update", payload });
         }

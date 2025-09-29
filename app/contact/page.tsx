@@ -2,7 +2,7 @@ export default function ContactPage() {
   return (
     <div className="max-w-2xl space-y-4">
       <h1 className="text-3xl font-bold">Contact Us</h1>
-      <p className="text-muted-foreground">We'd love to hear from you. This page is a placeholder.</p>
+      <p className="text-muted-foreground">We&apos;d love to hear from you. This page is a placeholder.</p>
       <div className="grid gap-3 sm:grid-cols-2">
         <input className="rounded-md border bg-background p-2 text-sm" placeholder="Name" />
         <input className="rounded-md border bg-background p-2 text-sm" placeholder="Email" type="email" />

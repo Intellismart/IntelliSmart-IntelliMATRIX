@@ -17,7 +17,7 @@ Scope: How to run the app locally, reboot the server, clear caches, and verify c
 - Start again: npm run dev
 
 3) Build and Run Production Locally
-- Build: npm run build
+- Build: 5
 - Start: npm run start
 - URL: http://localhost:3000 (uses optimized production build)
 - Stop: Ctrl + C

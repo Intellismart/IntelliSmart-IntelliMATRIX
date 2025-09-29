@@ -23,9 +23,10 @@ export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}));
   const { vehicleId = `VEH-${Math.random().toString(36).slice(2,8).toUpperCase()}`, kind = "shuttle", location } = body as Partial<Transport>;
   const now = new Date().toISOString();
-  const t: Transport = { id: genId("trans"), tenantId, vehicleId, kind: kind as any, status: "pending", location, updatedAt: now };
+  const allowedKinds: Transport["kind"][] = ["shuttle", "rover", "robotaxi", "delivery"];
+  const kindVal: Transport["kind"] = allowedKinds.includes(kind as Transport["kind"]) ? (kind as Transport["kind"]) : "shuttle";
+  const t: Transport = { id: genId("trans"), tenantId, vehicleId, kind: kindVal, status: "pending", location, updatedAt: now };
   await writeDb(db => {
-    if (!db.transports) (db as any).transports = [];
     db.transports.push(t);
   });
   const db2 = await readDb();

@@ -32,8 +32,8 @@ export default function LoginPage() {
       const next = search.get("next");
       if (data?.user?.role === "admin") router.push("/admin");
       else router.push(next || "/portal");
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Login failed");
     } finally {
       setLoading(false);
     }
@@ -49,7 +49,7 @@ export default function LoginPage() {
     setEmail(creds[role].email);
     setPassword(creds[role].password);
     // Auto submit
-    await handleSubmit(new Event("submit") as any);
+    await handleSubmit(new Event("submit") as unknown as React.FormEvent<HTMLFormElement>);
   }
 
   return (

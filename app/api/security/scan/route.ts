@@ -11,7 +11,10 @@ export async function POST(req: Request) {
   if (!auth.ok) return NextResponse.json({ error: auth.message }, { status: auth.status });
   const tenantId = auth.session.tenantId || auth.user.tenantId;
   if (!tenantId) return NextResponse.json({ error: "No tenant selected" }, { status: 400 });
-  const { scope = "network" } = await req.json().catch(() => ({}));
+  const body = await req.json().catch(() => ({} as { scope?: string }));
+  const rawScope = body.scope ?? "network";
+  const allowedSources: SecurityAlert["source"][] = ["endpoint", "network", "camera", "cloud"];
+  const scope: SecurityAlert["source"] = allowedSources.includes(rawScope as SecurityAlert["source"]) ? (rawScope as SecurityAlert["source"]) : "network";
   // Simulate scan finding an issue 50% of the time
   const found = Math.random() > 0.5;
   let alert: SecurityAlert | null = null;
@@ -22,14 +25,13 @@ export async function POST(req: Request) {
       id,
       tenantId,
       severity: scope === "camera" ? "high" : "medium",
-      source: scope as any,
+      source: scope,
       title: scope === "camera" ? "Camera motion anomaly" : "Vulnerability detected",
       description: scope === "camera" ? "Unexpected motion pattern detected during quiet hours." : "Open port with default credentials",
       time,
       status: "open",
     };
     await writeDb(db => {
-      if (!db.securityAlerts) (db as any).securityAlerts = [];
       db.securityAlerts.push(alert!);
     });
     bus.emit("security_alert", { tenantId, alertId: alert.id, severity: alert.severity, status: alert.status });

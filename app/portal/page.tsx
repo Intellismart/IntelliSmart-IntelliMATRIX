@@ -26,7 +26,6 @@ export default function PortalPage() {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [alerts, setAlerts] = useState<SecurityAlert[]>([]);
   const [cameras, setCameras] = useState<Camera[]>([]);
-  const [transports, setTransports] = useState<Transport[]>([]);
   const [uploadNote, setUploadNote] = useState<string>("");
   const [plan, setPlan] = useState<{ name: string; trialDaysLeft: number | null }>({ name: "Pro (Trial)", trialDaysLeft: 14 });
   const [tenants, setTenants] = useState<{ id: string; name: string }[]>([]);

@@ -1,10 +1,11 @@
-# Site Map — IntelliSMART AI Factory (as-built)
+8# Site Map — IntelliSMART AI Factory (as-built)
 
 This site map lists all user-facing routes and API endpoints in the repository, their purposes, and protection status.
 
 1) Web App Pages (App Router)
 - / — Home: Hero, featured categories, News/Reviews/Tips widgets
 - /store — Shop: Product grid and CTAs
+- /delivery — Autonomous Delivery overview and links
 - /news — Industry News (server-side RSS aggregation)
 - /reviews — Tech Reviews (server-side RSS aggregation)
 - /tips — Hints & Tips (daily rotation)
@@ -48,8 +49,12 @@ This site map lists all user-facing routes and API endpoints in the repository, 
   - GET  /api/cameras — list cameras
   - POST /api/cameras — create camera { name?, location? }
   - POST /api/cameras/:id/toggle — toggle { field: "online"|"recording" }
+- Transports
+  - GET  /api/transports — list transports
+  - POST /api/transports — create transport { vehicleId?, kind?, location? }
+  - POST /api/transports/:id/status — update status { status }
 - Real-time
-  - GET  /api/events — Server-Sent Events (agent_update, security_alert, camera_update; keep-alives)
+  - GET  /api/events — Server-Sent Events (agent_update, security_alert, camera_update, transport_update; keep-alives)
 
 4) Data Locations
 - JSON store: data/db.json (tenants, users, agents, securityAlerts, cameras)

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
-import { readDb, writeDb, genId } from "@/lib/store";
+import { readDb, writeDb } from "@/lib/store";
 import { Tenant } from "@/lib/types";
 
 export const dynamic = "force-dynamic";

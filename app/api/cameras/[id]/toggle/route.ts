@@ -19,9 +19,9 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
   await writeDb(d => {
     const c = (d.cameras || []).find(x => x.id === id && x.tenantId === tenantId);
     if (c) {
-      if (field === "online") (c as any).online = !c.online;
-      else (c as any).recording = !c.recording;
-      (c as any).lastSeen = new Date().toISOString();
+      if (field === "online") c.online = !c.online;
+      else c.recording = !c.recording;
+      c.lastSeen = new Date().toISOString();
     }
   });
   const db2 = await readDb();

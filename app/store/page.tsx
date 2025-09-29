@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 
 const products = [
@@ -35,8 +36,8 @@ export default function StorePage() {
       <section id="ai-agents" className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {products.map((p) => (
           <div key={p.id} className="rounded-xl border bg-card text-card-foreground flex flex-col overflow-hidden">
-            <div className="aspect-[16/10] w-full">
-              <img src={p.img} alt={p.name} className="h-full w-full object-cover" />
+            <div className="aspect-[16/10] w-full relative">
+              <Image src={p.img} alt={p.name} fill sizes="(min-width: 1280px) 25vw, (min-width: 768px) 33vw, 100vw" className="object-cover" />
             </div>
             <div className="p-5 flex flex-col flex-1">
               <div className="font-semibold text-lg mb-1">{p.name}</div>

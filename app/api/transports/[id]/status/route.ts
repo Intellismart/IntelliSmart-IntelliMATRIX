@@ -11,8 +11,10 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
   if (!auth.ok) return NextResponse.json({ error: auth.message }, { status: auth.status });
   const tenantId = auth.session.tenantId || auth.user.tenantId;
   if (!tenantId) return NextResponse.json({ error: "No tenant selected" }, { status: 400 });
-  const { status } = await req.json().catch(() => ({}));
+  const body = await req.json().catch(() => ({} as { status?: string }));
+  const status = body.status;
   if (!status || !["pending","approved","active","inactive"].includes(status)) return NextResponse.json({ error: "invalid status" }, { status: 400 });
+  const typedStatus = status as import("@/lib/types").Transport["status"];
   const { id } = await context.params;
   const db = await readDb();
   const t = (db.transports || []).find(x => x.id === id && x.tenantId === tenantId);
@@ -20,10 +22,10 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
   await writeDb(d => {
     const item = (d.transports || []).find(x => x.id === id && x.tenantId === tenantId);
     if (item) {
-      (item as any).status = status;
-      (item as any).updatedAt = new Date().toISOString();
+      item.status = typedStatus;
+      item.updatedAt = new Date().toISOString();
     }
   });
-  bus.emit("transport_update", { tenantId, transportId: id, status });
-  return NextResponse.json({ ok: true, status });
+  bus.emit("transport_update", { tenantId, transportId: id, status: typedStatus });
+  return NextResponse.json({ ok: true, status: typedStatus });
 }

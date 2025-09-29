@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
 import { readDb, writeDb, genId } from "@/lib/store";
-import { Role } from "@/lib/types";
+import { Role, User } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -35,7 +35,7 @@ export async function POST(req: Request) {
   } else {
     if (tenantId && tenantId !== auth.user.tenantId) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
-  const newUser = { id: genId("user"), email, name, role, tenantId, password: "demo" };
-  await writeDb(db => { db.users.push(newUser as any); });
+  const newUser: User = { id: genId("user"), email: email!, name: name!, role: role!, tenantId, password: "demo" };
+  await writeDb(db => { db.users.push(newUser); });
   return NextResponse.json({ user: { id: newUser.id, email, name, role, tenantId } });
 }
