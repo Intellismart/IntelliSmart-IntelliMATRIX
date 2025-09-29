@@ -87,5 +87,50 @@
   ],
   "securityAlerts": [],
   "cameras": [],
-  "transports": []
+  "transports": [
+    {
+      "id": "trans_izdrbi",
+      "tenantId": "client-1",
+      "vehicleId": "VEH-H9AP3B",
+      "kind": "delivery",
+      "status": "approved",
+      "updatedAt": "2025-09-29T19:58:34.628Z"
+    }
+  ],
+  "cms": {
+    "pages": [
+      {
+        "id": "page-home",
+        "slug": "home",
+        "title": "Home",
+        "content": "<h2>Welcome</h2><p>This is your CMS home page. Edit it in Admin → CMS.</p>",
+        "status": "published",
+        "createdAt": "2025-09-29T19:41:24.448Z",
+        "updatedAt": "2025-09-29T19:41:24.448Z"
+      },
+      {
+        "id": "page-about",
+        "slug": "about",
+        "title": "About",
+        "content": "<p>About your site...</p>",
+        "status": "draft",
+        "createdAt": "2025-09-29T19:41:24.448Z",
+        "updatedAt": "2025-09-29T19:41:24.448Z"
+      }
+    ],
+    "menu": [
+      {
+        "label": "Home",
+        "href": "/p/home"
+      },
+      {
+        "label": "About",
+        "href": "/p/about"
+      }
+    ],
+    "settings": {
+      "siteTitle": "IntelliSMART",
+      "homePageSlug": "home"
+    }
+  }
 }
