@@ -149,3 +149,33 @@ Flow:
 2) Access protected pages (/portal, /admin) and APIs
 3) Optional: POST /api/tenant/select to switch active tenant (admin/reseller)
 4) POST /api/logout to clear session
+
+
+## WordPress-style CMS (added)
+
+This repo now includes a lightweight, WordPress‑style CMS so admins can build and manage the general site.
+
+- Admin UI: /admin/cms — Create/edit pages, manage the primary menu, and set site title/home page.
+- Public Pages: /p/[slug] — Published pages are rendered at this route (e.g., /p/home).
+- Storage: Content is persisted in MongoDB if MONGODB_URI is set (single document in collection "appstate") or the local JSON file fallback (data/db.json).
+- RBAC: Only admins can access the CMS APIs and /admin/cms.
+
+Content model:
+- Page: { id, slug, title, content, status, authorUserId, createdAt, updatedAt }
+- Menu: array of { label, href }
+- Settings: { siteTitle, homePageSlug }
+
+CMS API Endpoints (admin only):
+- GET  /api/cms/pages — list pages; optional ?status=draft|published
+- POST /api/cms/pages — create page { title, slug?, content?, status? }
+- PUT  /api/cms/pages/:id — update page fields
+- DELETE /api/cms/pages/:id — delete page
+- GET  /api/cms/menu — get menu
+- POST /api/cms/menu — replace menu { menu: MenuItem[] }
+- GET  /api/cms/settings — get settings
+- POST /api/cms/settings — update settings { siteTitle?, homePageSlug? }
+
+Notes:
+- Content is stored as HTML/Markdown string in the demo and rendered with dangerouslySetInnerHTML. Only admins can author content; do not paste untrusted HTML.
+- This is a minimal foundation intended to be extended (media uploads, drafts/scheduling, block editor, roles per content, versioning, etc.).
+- Existing app features (auth, portal, admin, SSE, Mongo/file store) remain compatible.
