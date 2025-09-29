@@ -57,7 +57,7 @@ This site map lists all user-facing routes and API endpoints in the repository, 
   - GET  /api/events — Server-Sent Events (agent_update, security_alert, camera_update, transport_update; keep-alives)
 
 4) Data Locations
-- JSON store: data/db.json (tenants, users, agents, securityAlerts, cameras)
+- JSON store: data/db.json (tenants, users, agents, securityAlerts, cameras, transports)
 - Public assets: public/ (not currently used for custom images — Unsplash URLs are embedded)
 
 5) Navigation & Relationships
