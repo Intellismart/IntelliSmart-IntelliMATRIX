@@ -68,7 +68,7 @@ This repository now includes a working production demo backend suitable for user
 - Tenancy: per-tenant scoping for agents/users with reseller multi-tenant support.
 - RBAC: role-aware endpoints (admin, reseller, business, consumer).
 - Real‑time: Server‑Sent Events stream for live agent status updates.
-- Persistence: file‑based JSON store (data/db.json) with atomic writes and seed data.
+- Persistence: MongoDB (optional via env) or file‑based JSON fallback (data/db.json) with atomic writes and seed data.
 - Middleware: protects /portal and /admin (redirects to /login if unauthenticated).
 
 ### Demo Accounts
@@ -114,3 +114,38 @@ Notes:
 - Move persistence to a durable DB (e.g., Postgres + Prisma) and add migrations.
 - Add audit logs, rate limits, and permissions enforcement at resource level.
 - Implement billing (Stripe), marketplace checkout, and device/agent runtimes.
+
+## MongoDB Setup (optional)
+
+If you want to persist data to MongoDB instead of the local JSON file:
+
+1. Install dependencies: npm install
+2. Provision a MongoDB instance (e.g., MongoDB Atlas or local mongod).
+3. Create a .env file at the project root with:
+    - MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net
+    - MONGODB_DB=intellitrader
+4. Start the app: npm run dev
+
+Notes:
+
+- When MONGODB_URI is set, the app stores the entire application state in a single document in collection "appstate"
+  with _id="db".
+- On first run, seed data will be inserted automatically if the document does not exist.
+- If MONGODB_URI is not set, the app falls back to data/db.json.
+
+## Auth Setup
+
+- Sessions use an HMAC-signed cookie named `session`. For local/dev you can omit `SESSION_SECRET`; in production set a
+  strong random value.
+- Demo accounts (email/password) are seeded into the store. Passwords are plain text for demo only.
+
+Environment variables (.env):
+
+- SESSION_SECRET=your-strong-random-string
+
+Flow:
+
+1) POST /api/login with { email, password } → sets session cookie
+2) Access protected pages (/portal, /admin) and APIs
+3) Optional: POST /api/tenant/select to switch active tenant (admin/reseller)
+4) POST /api/logout to clear session

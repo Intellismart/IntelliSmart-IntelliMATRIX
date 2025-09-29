@@ -1,9 +1,10 @@
-import { NextResponse } from "next/server";
-import { clearSession } from "@/lib/auth";
-
-export const dynamic = "force-dynamic";
+import {NextResponse} from "next/server";
+import {clearSessionCookie} from "@/lib/auth";
 
 export async function POST() {
-  await clearSession();
-  return NextResponse.json({ ok: true });
+    const res = NextResponse.json({ok: true});
+    const cookie = clearSessionCookie();
+    // @ts-ignore
+    res.cookies.set(cookie.name, cookie.value, cookie.options);
+    return res;
 }

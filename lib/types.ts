@@ -62,6 +62,30 @@ export type Transport = {
   updatedAt: string;
 };
 
+export type CmsPage = {
+    id: string;
+    slug: string;
+    title: string;
+    content: string; // HTML or Markdown (demo)
+    status: "draft" | "published";
+    authorUserId?: string;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type MenuItem = { label: string; href: string };
+
+export type SiteSettings = {
+    siteTitle: string;
+    homePageSlug?: string;
+};
+
+export type CmsState = {
+    pages: CmsPage[];
+    menu: MenuItem[];
+    settings: SiteSettings;
+};
+
 export type DbSchema = {
   tenants: Tenant[];
   users: User[];
@@ -69,4 +93,5 @@ export type DbSchema = {
   securityAlerts: SecurityAlert[];
   cameras: Camera[];
   transports: Transport[];
+    cms?: CmsState; // optional to maintain backward compatibility
 };

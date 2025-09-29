@@ -1,13 +1,23 @@
-import { NextResponse } from "next/server";
-import { requireAuth } from "@/lib/auth";
-import { readDb } from "@/lib/store";
+import {NextRequest, NextResponse} from "next/server";
+import {getRequestSession} from "@/lib/auth";
+import {readDb} from "@/lib/store";
 
-export const dynamic = "force-dynamic";
-
-export async function GET() {
-  const auth = await requireAuth();
-  if (!auth.ok) return NextResponse.json({ error: auth.message }, { status: auth.status });
+export async function GET(req: NextRequest) {
+    const cookie = req.headers.get("cookie") || undefined;
+    const token = cookie?.split(";").find(p => p.trim().startsWith("session="))?.split("=")?.[1];
+    const session = getRequestSession(token);
+    if (!session) return NextResponse.json({user: null, session: null}, {status: 401});
   const db = await readDb();
-  const tenant = auth.session.tenantId ? db.tenants.find(t => t.id === auth.session.tenantId) : undefined;
-  return NextResponse.json({ user: { id: auth.user.id, email: auth.user.email, name: auth.user.name, role: auth.user.role }, tenant: tenant || null, session: auth.session });
+    const user = db.users.find(u => u.id === session.userId);
+    if (!user) return NextResponse.json({user: null, session: null}, {status: 401});
+    return NextResponse.json({
+        user: {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            role: user.role,
+            tenantId: user.tenantId,
+            managedTenantIds: user.managedTenantIds
+        }, session
+    });
 }

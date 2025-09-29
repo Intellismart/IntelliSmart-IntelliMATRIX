@@ -1,15 +1,40 @@
-import { promises as fs } from "fs";
+import {promises as fs} from "fs";
 import path from "path";
-import { Agent, DbSchema, Tenant, User, SecurityAlert, Camera, Transport } from "./types";
+import {Agent, Camera, DbSchema, SecurityAlert, Tenant, Transport, User} from "./types";
+import {getDb} from "./mongo";
 
 const dataDir = path.join(process.cwd(), "data");
 const dbFile = path.join(dataDir, "db.json");
+
+const useMongo = !!process.env.MONGODB_URI;
 
 async function ensureDir() {
   await fs.mkdir(dataDir, { recursive: true });
 }
 
 async function loadDb(): Promise<DbSchema> {
+    if (useMongo) {
+        const db = await getDb();
+        const coll = db.collection("appstate");
+        const doc = (await coll.findOne({_id: "db"})) as (Partial<DbSchema> & { _id: string }) | null;
+        if (!doc) {
+            const seeded = seed();
+            await coll.insertOne({_id: "db", ...seeded} as any);
+            return seeded;
+        }
+        // Ensure arrays exist (migration)
+        const parsed = doc as Partial<DbSchema>;
+        return {
+            tenants: parsed.tenants ?? [],
+            users: parsed.users ?? [],
+            agents: parsed.agents ?? [],
+            securityAlerts: parsed.securityAlerts ?? [],
+            cameras: parsed.cameras ?? [],
+            transports: parsed.transports ?? [],
+            cms: (parsed as any).cms ?? defaultCms(),
+        };
+    }
+
   await ensureDir();
   try {
     const raw = await fs.readFile(dbFile, "utf-8");
@@ -22,8 +47,9 @@ async function loadDb(): Promise<DbSchema> {
       securityAlerts: parsed.securityAlerts ?? [],
       cameras: parsed.cameras ?? [],
       transports: parsed.transports ?? [],
+        cms: (parsed as any).cms ?? defaultCms(),
     };
-    const migrated = !parsed.tenants || !parsed.users || !parsed.agents || !parsed.securityAlerts || !parsed.cameras || !parsed.transports;
+      const migrated = !parsed.tenants || !parsed.users || !parsed.agents || !parsed.securityAlerts || !parsed.cameras || !parsed.transports || !(parsed as any).cms;
     if (migrated) {
       await fs.writeFile(dbFile, JSON.stringify(db, null, 2), "utf-8");
     }
@@ -39,11 +65,48 @@ async function loadDb(): Promise<DbSchema> {
   }
 }
 
-async function saveDb(db: DbSchema) {
+async function saveDb(dbState: DbSchema) {
+    if (useMongo) {
+        const db = await getDb();
+        const coll = db.collection("appstate");
+        await coll.replaceOne({_id: "db"}, {_id: "db", ...dbState} as any, {upsert: true});
+        return;
+    }
   await ensureDir();
   const tmp = dbFile + ".tmp";
-  await fs.writeFile(tmp, JSON.stringify(db, null, 2), "utf-8");
+    await fs.writeFile(tmp, JSON.stringify(dbState, null, 2), "utf-8");
   await fs.rename(tmp, dbFile);
+}
+
+function defaultCms() {
+    const now = new Date().toISOString();
+    return {
+        pages: [
+            {
+                id: "page-home",
+                slug: "home",
+                title: "Home",
+                content: "<h2>Welcome</h2><p>This is your CMS home page. Edit it in Admin → CMS.</p>",
+                status: "published",
+                createdAt: now,
+                updatedAt: now
+            },
+            {
+                id: "page-about",
+                slug: "about",
+                title: "About",
+                content: "<p>About your site...</p>",
+                status: "draft",
+                createdAt: now,
+                updatedAt: now
+            },
+        ],
+        menu: [
+            {label: "Home", href: "/p/home"},
+            {label: "About", href: "/p/about"},
+        ],
+        settings: {siteTitle: "IntelliSMART", homePageSlug: "home"},
+    };
 }
 
 function seed(): DbSchema {
@@ -80,7 +143,7 @@ function seed(): DbSchema {
     { id: "t1", tenantId: "acme", vehicleId: "ACME-SHUT-001", kind: "shuttle", status: "active", location: "HQ Campus", updatedAt: now },
     { id: "t2", tenantId: "client-1", vehicleId: "CL1-ROVER-07", kind: "rover", status: "approved", location: "Client One DC", updatedAt: now }
   ];
-  return { tenants, users, agents, securityAlerts, cameras, transports };
+    return {tenants, users, agents, securityAlerts, cameras, transports, cms: defaultCms()};
 }
 
 // Simple mutex to avoid concurrent write corruption in dev

@@ -1,70 +1,107 @@
-import { cookies } from "next/headers";
+import {cookies} from "next/headers";
 import crypto from "crypto";
-import { readDb } from "./store";
-import { Role, Session } from "./types";
+import {readDb} from "./store";
+import {Session} from "./types";
 
-const SESSION_COOKIE = "session";
+// Simple HMAC-signed session token (demo only; replace with NextAuth/SSO in prod)
+// Format: base64url(payload).base64url(signature)
+const DEFAULT_TTL_MS = 1000 * 60 * 60 * 24 * 7; // 7 days
 
 function getSecret() {
-  return process.env.SESSION_SECRET || "dev-demo-secret";
+    return process.env.SESSION_SECRET || "dev-insecure-secret-change-me";
 }
 
-function sign(data: string) {
-  const h = crypto.createHmac("sha256", getSecret()).update(data).digest("base64url");
-  return h;
+function b64url(input: Buffer | string) {
+    return Buffer.from(input)
+        .toString("base64")
+        .replace(/=/g, "")
+        .replace(/\+/g, "-")
+        .replace(/\//g, "_");
 }
 
-export function encodeSession(s: Session) {
-  const payload = Buffer.from(JSON.stringify(s)).toString("base64url");
-  const sig = sign(payload);
-  return `${payload}.${sig}`;
+function sign(data: string): string {
+    const h = crypto.createHmac("sha256", getSecret());
+    h.update(data);
+    return b64url(h.digest());
 }
 
-export function decodeSession(token?: string): Session | null {
+export function encodeSession(session: Session): string {
+    const payload = JSON.stringify(session);
+    const body = b64url(payload);
+    const sig = sign(body);
+    return `${body}.${sig}`;
+}
+
+export function decodeSession(token: string | undefined | null): Session | null {
   if (!token) return null;
-  const [payload, sig] = token.split(".");
-  if (!payload || !sig) return null;
-  const expected = sign(payload);
-  if (expected !== sig) return null;
+    const parts = token.split(".");
+    if (parts.length !== 2) return null;
+    const [body, sig] = parts;
+    if (sign(body) !== sig) return null;
   try {
-    const obj = JSON.parse(Buffer.from(payload, "base64url").toString("utf-8"));
-    return obj as Session;
+      const json = Buffer.from(body.replace(/-/g, "+").replace(/_/g, "/"), "base64").toString("utf8");
+      const s = JSON.parse(json) as Session;
+      return s;
   } catch {
     return null;
   }
 }
 
-export async function getSession() {
-  const store = await cookies();
-  const token = store.get(SESSION_COOKIE)?.value;
+export function getRequestSession(cookieValue?: string): Session | null {
+    const token = cookieValue ?? cookies().get("session")?.value;
   return decodeSession(token);
 }
 
-export async function createSession(userId: string, role: Role, tenantId?: string) {
-  const s: Session = { userId, role, tenantId, iat: Date.now() };
-  const token = encodeSession(s);
-  const store = await cookies();
-  store.set(SESSION_COOKIE, token, { httpOnly: true, sameSite: "lax", path: "/" });
-  return s;
+export function createSessionCookie(session: Session, ttlMs = DEFAULT_TTL_MS) {
+    const token = encodeSession(session);
+    const expires = new Date(Date.now() + ttlMs);
+    return {
+        name: "session",
+        value: token,
+        options: {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax" as const,
+            path: "/",
+            expires,
+        },
+    };
 }
 
-export async function clearSession() {
-  const store = await cookies();
-  store.delete(SESSION_COOKIE);
+export function clearSessionCookie() {
+    return {
+        name: "session",
+        value: "",
+        options: {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax" as const,
+            path: "/",
+            expires: new Date(0),
+        },
+    };
 }
 
-export async function requireAuth(minRole?: Role) {
-  const s = await getSession();
-  if (!s) return { ok: false as const, status: 401, message: "Unauthorized" };
-  if (minRole) {
-    const order: Role[] = ["consumer", "business", "reseller", "admin"];
-    if (order.indexOf(s.role) < order.indexOf(minRole)) {
-      return { ok: false as const, status: 403, message: "Forbidden" };
+
+export async function requireAuth(opts?: { minRole?: import("./types").Role }) {
+    const token = cookies().get("session")?.value;
+    const session = decodeSession(token);
+    if (!session) return {ok: false as const, status: 401, message: "Unauthorized"};
+    const db = await readDb();
+    const user = db.users.find(u => u.id === session.userId);
+    if (!user) return {ok: false as const, status: 401, message: "Unauthorized"};
+    if (opts?.minRole) {
+        const hierarchy: import("./types").Role[] = ["consumer", "business", "reseller", "admin"];
+        if (hierarchy.indexOf(user.role) < hierarchy.indexOf(opts.minRole)) {
+            return {ok: false as const, status: 403, message: "Forbidden"};
+        }
     }
-  }
-  // attach user
-  const db = await readDb();
-  const user = db.users.find(u => u.id === s.userId);
-  if (!user) return { ok: false as const, status: 401, message: "Unauthorized" };
-  return { ok: true as const, session: s, user };
+    return {ok: true as const, session, user};
+}
+
+export async function createSession(userId: string, role: import("./types").Role, tenantId?: string) {
+    const s: Session = {userId, role, tenantId, iat: Date.now()};
+    const cookie = createSessionCookie(s);
+    // next/headers cookies() in route handlers sets cookie on response
+    cookies().set(cookie.name, cookie.value, cookie.options);
 }
