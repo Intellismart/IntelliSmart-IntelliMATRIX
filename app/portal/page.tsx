@@ -100,6 +100,9 @@ export default function PortalPage() {
         } else if (data?.type === "camera_update") {
           const { cameraId, online, recording } = data.payload;
           setCameras(prev => prev.map(c => c.id === cameraId ? { ...c, online: online ?? c.online, recording: recording ?? c.recording, lastSeen: new Date().toISOString() } : c));
+        } else if (data?.type === "transport_update") {
+          const { transportId, status } = data.payload;
+          setTransports(prev => prev.map(t => t.id === transportId ? { ...t, status, updatedAt: new Date().toISOString() } : t));
         }
       } catch {}
     };
@@ -142,6 +145,16 @@ export default function PortalPage() {
     if (res.ok) {
       await loadCameras();
     }
+  }
+
+  async function addTransport(kind: Transport["kind"] = "delivery") {
+    await fetch('/api/transports', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind }) });
+    await loadTransports();
+  }
+
+  async function setTransportStatus(id: string, status: Transport["status"]) {
+    await fetch(`/api/transports/${id}/status`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) });
+    await loadTransports();
   }
 
   function handleTrainingSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -358,6 +371,32 @@ export default function PortalPage() {
             <li>Marketplace: 5 new sector packs for retail and logistics</li>
           </ul>
           <Link href="/news" className="inline-block mt-3 text-sm underline">Read industry news</Link>
+        </div>
+      </section>
+
+      <section className="rounded-xl border p-6 bg-card text-card-foreground">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-semibold">Transports</h2>
+          <div className="flex gap-2">
+            <Button size="sm" onClick={() => addTransport('delivery')}>Add Delivery Vehicle</Button>
+            <Button size="sm" variant="outline" onClick={() => loadTransports()}>Refresh</Button>
+          </div>
+        </div>
+        <div className="space-y-3">
+          {transports.slice(0,5).map((t) => (
+            <div key={t.id} className="flex items-center justify-between rounded-lg border p-4">
+              <div>
+                <div className="font-medium">{t.vehicleId || t.id} <span className="text-xs text-muted-foreground">({t.kind})</span></div>
+                <div className="text-xs text-muted-foreground">Status: {t.status} · {t.location || '—'}</div>
+              </div>
+              <div className="flex gap-2">
+                {t.status !== 'approved' && <Button size="sm" variant="outline" onClick={() => setTransportStatus(t.id, 'approved')}>Approve</Button>}
+                {t.status !== 'active' && <Button size="sm" onClick={() => setTransportStatus(t.id, 'active')}>Activate</Button>}
+                {t.status === 'active' && <Button size="sm" variant="destructive" onClick={() => setTransportStatus(t.id, 'inactive')}>Deactivate</Button>}
+              </div>
+            </div>
+          ))}
+          {transports.length === 0 && <div className="text-xs text-muted-foreground">No transports yet.</div>}
         </div>
       </section>
 
